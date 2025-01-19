@@ -1,0 +1,417 @@
+import React, { useEffect, useState } from "react"; 
+import { createEmployee, getEmployee, updateEmployee } from "./Employeeservice"; 
+import { useNavigate, useParams } from "react-router-dom";
+
+const EmployeeComponent = () => { 
+    const [name, setName] = useState(''); 
+    const [email, setEmail] = useState(''); 
+    // Fixed naming convention
+     const [phoneNumber, setPhoneNumber] = useState('');
+      const { id } = useParams(); 
+      const navigate = useNavigate(); // Fixed naming convention
+
+const [errors, setErrors] = useState({
+    name: '',
+    email: '',
+    phoneNumber: ''
+});
+
+useEffect(() => {
+    if (id) {
+        getEmployee(id)
+            .then((response) => {
+                const { name, email, phoneNumber } = response.data;
+                setName(name);
+                setEmail(email);
+                setPhoneNumber(phoneNumber);
+            })
+            .catch(error => {
+                console.error('Error fetching employee:', error);
+            });
+    }
+}, [id]);
+
+const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
+
+const validatePhoneNumber = (phone) => {
+    const phoneRegex = /^\d{10}$/; // Assumes 10-digit phone number
+    return phoneRegex.test(phone);
+};
+
+const validateForm = () => {
+    let valid = true;
+    const errorsCopy = { ...errors };
+
+    // Name validation
+    if (!name.trim()) {
+        errorsCopy.name = 'Name is required';
+        valid = false;
+    } else if (name.trim().length < 2) {
+        errorsCopy.name = 'Name must be at least 2 characters';
+        valid = false;
+    } else {
+        errorsCopy.name = '';
+    }
+
+    // Email validation
+    if (!email.trim()) {
+        errorsCopy.email = 'Email is required';
+        valid = false;
+    } else if (!validateEmail(email)) {
+        errorsCopy.email = 'Please enter a valid email address';
+        valid = false;
+    } else {
+        errorsCopy.email = '';
+    }
+
+    // Phone number validation
+    if (!phoneNumber.trim()) {
+        errorsCopy.phoneNumber = 'Phone number is required';
+        valid = false;
+    } else if (!validatePhoneNumber(phoneNumber)) {
+        errorsCopy.phoneNumber = 'Please enter a valid 10-digit phone number';
+        valid = false;
+    } else {
+        errorsCopy.phoneNumber = '';
+    }
+
+    setErrors(errorsCopy);
+    return valid;
+};
+
+const saveOrUpdateEmployee = async (e) => {
+    e.preventDefault();
+
+    if (validateForm()) {
+        const employee = { name, email, phoneNumber };
+
+        try {
+            if (id) {
+                await updateEmployee(id, employee);
+            } else {
+                await createEmployee(employee);
+            }
+            navigate('/employees');
+        } catch (error) {
+            console.error('Error saving employee:', error);
+            // You might want to show an error message to the user here
+        }
+    }
+};
+
+const getPageTitle = () => {
+    return (
+        <h2 className='text-center'>
+            {id ? 'Update Employee' : 'Add Employee'}
+        </h2>
+    );
+};
+
+return (
+    <div className='container'>
+        <div className='row mt-4'>
+            <div className='card col-md-6 offset-md-3'>
+                {getPageTitle()}
+                <div className='card-body'>
+                    <form onSubmit={saveOrUpdateEmployee}>
+                        <div className='form-group mb-3'>
+                            <label className='form-label'>Name:</label>
+                            <input
+                                type='text'
+                                placeholder="Enter employee name"
+                                name='name'
+                                value={name}
+                                className={`form-control ${errors.name ? 'is-invalid' : ''}`}
+                                onChange={(e) => setName(e.target.value)}
+                            />
+                            {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+                        </div>
+
+                        <div className='form-group mb-3'>
+                            <label className='form-label'>Email:</label>
+                            <input
+                                type='email'
+                                placeholder="Enter email address"
+                                name='email'
+                                value={email}
+                                className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                            {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                        </div>
+
+                        <div className='form-group mb-3'>
+                            <label className='form-label'>Phone Number:</label>
+                            <input
+                                type='tel'
+                                placeholder="Enter 10-digit phone number"
+                                name='phoneNumber'
+                                value={phoneNumber}
+                                className={`form-control ${errors.phoneNumber ? 'is-invalid' : ''}`}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                            />
+                            {errors.phoneNumber && <div className="invalid-feedback">{errors.phoneNumber}</div>}
+                        </div>
+
+                        <button type="submit" className='btn btn-primary'>
+                            {id ? 'Update' : 'Save'} Employee
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+};
+
+export default EmployeeComponent;
+
+
+-------------------------------------------------
+import axios from "axios";
+
+const Rest_API_Base_Url='http://localhost:8080/api/getusers' ;// Here we need to insert the Controller api's from SpringBoot
+
+export const listEmployee=()=> {
+    return axios.get(Rest_API_Base_Url);
+}
+export const createEmployee=(employee)=> axios.post('http://localhost:8080/api/addEmp',employee);
+export const getEmployee=(employeeId)=>axios.get(Rest_API_Base_Url+'/'+employeeId);
+export const updateEmployee=(employeeId,employee)=>axios.put('http://localhost:8080/api/update' +'/'+employeeId,employee);
+export const deleteEmployee=(employeeId)=>axios.delete('http://localhost:8080/api/delete' +'/'+employeeId);
+
+----------------------------------------
+import React from "react";
+
+const FooterComponent=()=>{
+    return (
+        <footer className="footer">
+            <span>All rights Reserved 2025 by Prodaptians</span>
+        </footer>
+    )
+}
+export default FooterComponent
+---------------------------------------
+
+import React from 'react'
+
+
+const HeaderComponent=()=>{
+    return(
+        <div>
+            <header >
+                <nav className="navbar navbar-dark bg-dark">
+                <a className="navbar-brand" href="#">Employee List</a> 
+
+                </nav>
+            </header>
+        </div>
+    )
+}
+
+export default  HeaderComponent
+-------------------------------------------------------
+import React, { useEffect, useState } from 'react';
+import { deleteEmployee, getEmployee, listEmployee } from './Employeeservice'; 
+import { useNavigate } from 'react-router-dom';
+
+const ListEmployeeComponent = () => {
+     const [employees, setEmployees] = useState([]);
+     const navigate = useNavigate(); // Fixed variable name from navigator to navigate
+    let done=employees; 
+        useEffect(() => {
+            getAllEmployees();
+        }, []);
+
+        function getAllEmployees() {
+            listEmployee()
+                .then((response) => {
+                    setEmployees(response.data);
+                    done=response.data // Fixed: using setEmployees instead of getEmployee
+                     //console.log("Employee with-------",done);
+                 })
+                    .catch(error => {
+                        console.error(error);
+                     });
+                console.log(listEmployee());
+        }
+
+        function addNewEmployee() {
+            navigate('/add-employee');
+        }
+
+        function updateEmployee(id) { // Added id parameter
+            
+            navigate(`/edit-employee/${id}`);
+        }
+
+        function removeEmployee(id) {
+            console.log(id);
+            deleteEmployee(id)
+                .then((response) => {
+                    getAllEmployees();
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+
+        return (
+            <div className="container">
+                <button className="btn btn-primary mb-2" onClick={addNewEmployee}>
+                    Add Employee
+                </button>
+                
+                <h2 className="text-center">List of Employees</h2>
+                <table className="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Employee Id</th>
+                            <th>Employee Name</th>
+                            <th>Employee Email</th>
+                            <th>Employee PhoneNumber</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {done.map(employee => (
+                            <tr key={employee.id}>
+                                <td>{employee.id}</td>
+                                <td>{employee.name}</td>
+                                <td>{employee.email}</td>
+                                <td>{employee.phoneNumber}</td>
+                                <td>
+                                    <button 
+                                        className="btn btn-info" 
+                                        onClick={() => updateEmployee(employee.id)}>
+                                        Update
+                                    </button>
+                                    <button 
+                                        className="btn btn-danger" 
+                                        onClick={() => removeEmployee(employee.id)}
+                                        style={{ marginLeft: '10px' }}>
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
+
+export default ListEmployeeComponent;
+----------------------------------------------------
+import {  useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import axios from "axios";
+
+const Login = ({setAuth}) => {
+    const [username, usernameupdate] = useState('');
+    const [password, passwordupdate] = useState('');
+    const [error, setError]=useState('');
+    const usenavigate=useNavigate();
+
+    const ProceedLogin = async (e) => {
+        e.preventDefault();
+       
+        try{
+            const response = await axios.get(`http://localhost:3000/users?username=${username}&password=${password}`);
+            if(response.data.length>0){
+             // setAuth(true);
+              localStorage.setItem("isAuthenticated",true);
+              localStorage.setItem("username",username);  
+              toast.success("You authorized person")
+              usenavigate("/employees");
+            }else{
+                toast.error("Invalid username or password");
+                setError("Invalid username or password");
+            }
+        }catch(err){
+            console.error("Error logging in:", err);
+      setError("Server error. Please try again later.");
+        }
+    }
+    return (
+        <div className="row">
+            <div className="offset-lg-3 col-lg-6" style={{ marginTop: '100px' }}>
+                <form onSubmit={ProceedLogin} className="container">
+                    <div className="card">
+                        <div className="card-header">
+                            <h2>User Login</h2>
+                        </div>
+                        <div className="card-body">
+                            <div className="form-group">
+                                <label>User Name <span className="errmsg">*</span></label>
+                                <input value={username} onChange={e => usernameupdate(e.target.value)} className="form-control" required></input>
+                            </div>
+                            <div className="form-group">
+                                <label>Password <span className="errmsg">*</span></label>
+                                <input type="password" value={password} onChange={e => passwordupdate(e.target.value)} className="form-control" required></input>
+                            </div>
+                        </div>
+                        <div className="card-footer">
+                            <button type="submit" className="btn btn-primary">Login</button> |
+                            <Link className="btn btn-success" to={'/register'}>New User</Link>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+export default Login;
+-----------------------------------------------
+import { useState } from 'react'
+import './App.css'
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { ProtectedPage } from './components/ProtectedPage';
+import HeaderCompnent from './components/HeaderComponent'
+import FooterComponent from './components/FooterComponent'
+import ListEmployeeComponent from './components/ListEmployeeComponent'
+import EmployeeComponent from './components/EmployeeComponent'
+import {BrowserRouter, Routes, Route, Router, Navigate} from 'react-router-dom'
+import Login from './components/login';
+import RegisterForm from './components/register'; 
+import { ToastContainer } from 'react-toastify';
+
+function App(){
+  const[isAuthenticated, setAuthenticated]=useState(()=>{
+    return localStorage.getItem('isAuthenticated')==='true';
+  });
+  const setAuth=(isAuth)=>{
+    localStorage.setItem('isAuthenticated', isAuth);
+    setAuthenticated(isAuth);
+  }
+  return(
+    <>    
+    <BrowserRouter>
+    <ToastContainer/>
+    <HeaderCompnent/>
+    <Routes>
+      
+    <Route path='/login' element={<Login setAuth={setAuthenticated}/>}/>
+    <Route path='/' element={<Login/>}></Route>
+    <Route path='/register' element={<RegisterForm/>}></Route>
+
+      {/* //http://localhost:8080/employees */}
+      <Route path='/employees' element={<ProtectedPage isAuthenticated={isAuthenticated}><ListEmployeeComponent/></ProtectedPage>}/>
+      {/* //http://localhost:8080/add-employee */}
+      <Route path='/add-employee' element={<EmployeeComponent/>}></Route>
+      {/* //http://localhost:8080/edit-employee/1 */}
+      <Route path='/edit-employee/:id' element={<EmployeeComponent/>}></Route>
+    
+    </Routes>
+    <FooterComponent/>
+    </BrowserRouter>    
+    </>
+  )
+}
+
+export default App
